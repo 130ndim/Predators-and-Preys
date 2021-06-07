@@ -1,22 +1,27 @@
 from ctypes import *
 import pathlib
 import numpy as np
-import platform
-import os
+import os.path as osp
 
-suff = ".so" if platform.system() == "Linux" else ".dylib"  # No Windows
+import glob
 
-dir_path = os.path.dirname(__file__)
+path = pathlib.Path(__file__).parent.parent.parent.absolute()
+game_libfile = glob.glob(osp.join(path, 'build/*/game*.so'))[0]
+entity_libfile = glob.glob(osp.join(path, 'build/*/entity*.so'))[0]
 
-lib_g = CDLL(dir_path + "/game" + suff)
-lib_e = CDLL(dir_path + "/physics/entity" + suff)
+
+lib_g = CDLL(game_libfile)
+lib_e = CDLL(entity_libfile)
+
 
 class Entity(Structure):
     _fields_ = [('radius', c_double), ('speed', c_double), ('position', c_double * 2)]
 
+
 entity_p = POINTER(Entity)
 int_p = POINTER(c_int)
 double_p = POINTER(c_double)
+
 
 class FGame(Structure):
     _fields_ = [("predators", entity_p),
@@ -46,7 +51,8 @@ class FGame(Structure):
                 ("max_dist", c_double),
                 ("min_dist", c_double),
                 ("al", c_int)]
-                
+
+
 game_p = POINTER(FGame)
 
 
@@ -82,6 +88,7 @@ Reset.argtypes = [game_p]
 
 seeding = lib_g.seed
 seeding.argtypes = [c_int]
+
 
 class Game:
     def __init__(self, config):
